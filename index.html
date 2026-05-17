@@ -54,6 +54,10 @@ button{font-family:inherit}
 .ca{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .ib{background:transparent;border:none;color:#ff6b6b;cursor:pointer;font-size:18px;padding:2px 6px}
 .ib.cf{background:#e74c3c;color:#fff;border-radius:8px;font-size:11px;font-weight:900;padding:7px 9px;white-space:nowrap}
+.dc{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.dc button{border:none;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap}
+.dr{background:#e74c3c;color:#fff}
+.dk{background:#34495e;color:#fff}
 .sa{border-radius:6px;width:30px;height:30px;font-size:13px;font-weight:900;cursor:pointer;border:1px solid #f39c12;background:#3d1500;color:#f39c12;display:inline-flex;align-items:center;justify-content:center}
 .sa:disabled{border-color:#444;background:transparent;color:#444;cursor:default}
 .ir{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03)}
@@ -313,7 +317,9 @@ function rCats(){
             <span class="qn" id="q${esc(it.id)}">${it.qty}</span>
             <button class="qb" type="button" onclick="chQty('${cat.id}','${it.id}',1)">+</button>
           </div>
-          <button class="db${itemPending ? " cf" : ""}" type="button" onclick="delItem('${cat.id}','${it.id}')">${itemPending ? "削除?" : "×"}</button>
+          ${itemPending
+            ? `<div class="dc"><button class="dr" type="button" onclick="runDelItem('${cat.id}','${it.id}')">実行</button><button class="dk" type="button" onclick="cancelDel()">戻る</button></div>`
+            : `<button class="db" type="button" onclick="delItem('${cat.id}','${it.id}')">×</button>`}
         </div>`;
       }).join("");
     if(!SORT){
@@ -331,7 +337,9 @@ function rCats(){
     return `<div class="cb${SORT ? " sm" : ""}" id="ct${esc(cat.id)}">
       <div class="ch">
         <div><div class="cn">${esc(cat.name)}</div><div class="cs">${sub}</div></div>
-        <div class="ca">${sortButtons}<button class="ib${catPending ? " cf" : ""}" type="button" onclick="delCat('${cat.id}')">${catPending ? "削除?" : "🗑"}</button></div>
+        <div class="ca">${sortButtons}${catPending
+          ? `<div class="dc"><button class="dr" type="button" onclick="runDelCat('${cat.id}')">実行</button><button class="dk" type="button" onclick="cancelDel()">戻る</button></div>`
+          : `<button class="ib" type="button" onclick="delCat('${cat.id}')">🗑</button>`}</div>
       </div>${rows}</div>`;
   }).join("");
   if(ACID){
@@ -407,12 +415,12 @@ function chQty(cid, iid, d){
 }
 function delItem(cid, iid){
   var key = cid + "|" + iid;
-  if(PDI !== key){
-    PDI = key;
-    PDC = null;
-    rCats();
-    return;
-  }
+  PDI = key;
+  PDC = null;
+  rCats();
+}
+function runDelItem(cid, iid){
+  if(PDI !== cid + "|" + iid) return;
   var ev = getEv();
   if(!ev) return;
   var cat = ev.categories.find(function(c){ return c.id === cid; });
@@ -420,6 +428,11 @@ function delItem(cid, iid){
   cat.items = cat.items.filter(function(it){ return it.id !== iid; });
   PDI = null;
   save(); rCats(); rHead(); rEvList();
+}
+function cancelDel(){
+  PDC = null;
+  PDI = null;
+  rCats();
 }
 
 function startAI(cid){ ACID = cid; rCats(); }
@@ -462,12 +475,12 @@ function doAddCat(){
   rCats(); rSel(); rEvList();
 }
 function delCat(cid){
-  if(PDC !== cid){
-    PDC = cid;
-    PDI = null;
-    rCats();
-    return;
-  }
+  PDC = cid;
+  PDI = null;
+  rCats();
+}
+function runDelCat(cid){
+  if(PDC !== cid) return;
   var ev = getEv();
   if(!ev) return;
   ev.categories = ev.categories.filter(function(c){ return c.id !== cid; });
