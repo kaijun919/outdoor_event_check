@@ -49,6 +49,7 @@ button{font-family:inherit}
 .cs{font-size:11px;opacity:.6;margin-top:2px}
 .ca{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .ib{background:transparent;border:none;color:#ff6b6b;cursor:pointer;font-size:18px;padding:2px 6px}
+.ib.cf{background:#e74c3c;color:#fff;border-radius:8px;font-size:11px;font-weight:900;padding:7px 9px;white-space:nowrap}
 .sa{border-radius:6px;width:30px;height:30px;font-size:13px;font-weight:900;cursor:pointer;border:1px solid #f39c12;background:#3d1500;color:#f39c12;display:inline-flex;align-items:center;justify-content:center}
 .sa:disabled{border-color:#444;background:transparent;color:#444;cursor:default}
 .ir{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03)}
@@ -61,6 +62,7 @@ button{font-family:inherit}
 .qb{background:#c0392b;border:none;color:#fff;width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:16px;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
 .qn{font-size:13px;font-weight:800;min-width:26px;text-align:center;color:#f39c12}
 .db{background:transparent;border:none;color:#ff6b6b;cursor:pointer;font-size:18px;padding:0 4px;flex-shrink:0}
+.db.cf{background:#e74c3c;color:#fff;border-radius:8px;font-size:11px;font-weight:900;padding:7px 8px;white-space:nowrap}
 .aib{width:100%;padding:10px;background:transparent;border:1px dashed rgba(192,57,43,.33);border-radius:0 0 12px 12px;color:#c0392b;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px}
 .acb{width:100%;padding:14px;background:transparent;border:2px dashed rgba(192,57,43,.33);border-radius:16px;color:#c0392b;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;margin-bottom:12px}
 .ar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;background:#1a0a00;border-top:1px solid rgba(192,57,43,.13)}
@@ -167,6 +169,8 @@ var SORT = false;
 var ECID = null;
 var EIID = null;
 var ACID = null;
+var PDC = null;
+var PDI = null;
 
 var DEF = [{
   id:"ev1", name:"デフォルト", date:"",
@@ -285,6 +289,7 @@ function rCats(){
   cc.innerHTML = ev.categories.map(function(cat, ci){
     var chk = cat.items.filter(function(it){ return it.checked; }).length;
     var sub = SORT ? cat.items.length + " アイテム" : chk + "/" + cat.items.length + " 完了";
+    var catPending = PDC === cat.id;
     var sortButtons = "";
     if(SORT){
       sortButtons = `
@@ -294,6 +299,8 @@ function rCats(){
     var rows = SORT
       ? `<div style="padding:8px 14px;font-size:12px;opacity:.5">${cat.items.length} アイテム</div>`
       : cat.items.map(function(it){
+        var itemKey = cat.id + "|" + it.id;
+        var itemPending = PDI === itemKey;
         return `<div class="ir${it.checked ? " ck" : ""}" id="r${esc(it.id)}">
           <div class="bx${it.checked ? " ck" : ""}" onclick="togItem('${cat.id}','${it.id}')">${it.checked ? "✓" : ""}</div>
           <div class="nm${it.checked ? " ck" : ""}" onclick="openMo('${cat.id}','${it.id}')">${esc(it.name)}</div>
@@ -302,7 +309,7 @@ function rCats(){
             <span class="qn" id="q${esc(it.id)}">${it.qty}</span>
             <button class="qb" type="button" onclick="chQty('${cat.id}','${it.id}',1)">+</button>
           </div>
-          <button class="db" type="button" onclick="delItem('${cat.id}','${it.id}')">×</button>
+          <button class="db${itemPending ? " cf" : ""}" type="button" onclick="delItem('${cat.id}','${it.id}')">${itemPending ? "削除?" : "×"}</button>
         </div>`;
       }).join("");
     if(!SORT){
@@ -320,7 +327,7 @@ function rCats(){
     return `<div class="cb${SORT ? " sm" : ""}" id="ct${esc(cat.id)}">
       <div class="ch">
         <div><div class="cn">${esc(cat.name)}</div><div class="cs">${sub}</div></div>
-        <div class="ca">${sortButtons}<button class="ib" type="button" onclick="delCat('${cat.id}')">🗑</button></div>
+        <div class="ca">${sortButtons}<button class="ib${catPending ? " cf" : ""}" type="button" onclick="delCat('${cat.id}')">${catPending ? "削除?" : "🗑"}</button></div>
       </div>${rows}</div>`;
   }).join("");
   if(ACID){
@@ -395,11 +402,19 @@ function chQty(cid, iid, d){
   if(el) el.textContent = it.qty;
 }
 function delItem(cid, iid){
+  var key = cid + "|" + iid;
+  if(PDI !== key){
+    PDI = key;
+    PDC = null;
+    rCats();
+    return;
+  }
   var ev = getEv();
   if(!ev) return;
   var cat = ev.categories.find(function(c){ return c.id === cid; });
   if(!cat) return;
   cat.items = cat.items.filter(function(it){ return it.id !== iid; });
+  PDI = null;
   save(); rCats(); rHead(); rEvList();
 }
 
@@ -418,6 +433,7 @@ function doAddItem(cid){
   cat.items.push({id:gid(), name:name, qty:qty, checked:false});
   save();
   ACID = null;
+  PDI = null;
   rCats(); rHead(); rEvList();
 }
 
@@ -442,10 +458,18 @@ function doAddCat(){
   rCats(); rSel(); rEvList();
 }
 function delCat(cid){
+  if(PDC !== cid){
+    PDC = cid;
+    PDI = null;
+    rCats();
+    return;
+  }
   var ev = getEv();
   if(!ev) return;
   ev.categories = ev.categories.filter(function(c){ return c.id !== cid; });
   if(ACID === cid) ACID = null;
+  PDC = null;
+  PDI = null;
   save(); rCats(); rSel(); rHead(); rEvList();
 }
 function moveCat(cid, d){
