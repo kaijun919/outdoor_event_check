@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#c0392b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ごっちリスト" />
+  <title>からあげ！ごっち チェックリスト</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a0a00; font-family: 'Noto Sans JP', sans-serif; color: #fff; overscroll-behavior: none; }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
+    select option { background: #1a0a00; }
+    button { font-family: inherit; }
+    @keyframes flamePop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+    /* ===== LAYOUT ===== */
+    #app { min-height: 100vh; }
+
+    /* ===== HEADER ===== */
+    #header {
+      background: linear-gradient(135deg, #c0392b 0%, #e74c3c 40%, #f39c12 100%);
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 4px 20px rgba(231,76,60,0.6);
+    }
+    #header-inner { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+    #logo { display: flex; align-items: center; gap: 8px; }
+    #flame { font-size: 28px; }
+    #logo-text { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; text-shadow: 0 2px 8px rgba(0,0,0,0.4); line-height: 1.1; }
+    #logo-sub { font-size: 10px; font-weight: 500; opacity: 0.85; letter-spacing: 1px; }
+    #progress-wrap { height: 6px; background: rgba(0,0,0,0.3); }
+    #progress-fill { height: 100%; background: #fff; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1); border-radius: 0 3px 3px 0; width: 0%; }
+    #header-right { text-align: right; }
+    #progress-pct { font-size: 22px; font-weight: 900; }
+    #progress-count { font-size: 10px; opacity: 0.8; }
+
+    /* ===== NAV ===== */
+    #nav { display: flex; background: #2d0e00; border-bottom: 2px solid #c0392b; }
+    .nav-btn { flex: 1; padding: 12px 8px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s; }
+    .nav-btn.active { background: #c0392b; color: #fff; }
+
+    /* ===== CONTENT ===== */
+    .content { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+    /* ===== EVENT SELECTOR ===== */
+    #event-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; background: #2d0e00; border-radius: 12px; padding: 12px; border: 1px solid rgba(192,57,43,0.27); }
+    #event-select { flex: 1; background: transparent; border: none; color: #fff; font-size: 15px; font-weight: 700; outline: none; cursor: pointer; font-family: inherit; }
+    .reset-btn { background: #2d0e00; border: 1px solid #c0392b; color: #c0392b; border-radius: 10px; padding: 10px 12px; font-weight: 800; cursor: pointer; font-size: 11px; white-space: nowrap; }
+
+    /* ===== STATS ===== */
+    #stats-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .stat-card { flex: 1; border-radius: 12px; padding: 10px; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 900; line-height: 1; }
+    .stat-label { font-size: 10px; opacity: 0.7; margin-top: 2px; font-weight: 600; letter-spacing: 0.5px; }
+
+    /* ===== CATEGORY BLOCK ===== */
+    .cat-block { background: #2d0e00; border-radius: 16px; margin-bottom: 12px; border: 1px solid rgba(192,57,43,0.2); overflow: hidden; transition: border 0.2s; animation: fadeIn 0.2s ease; }
+    .cat-block.sort-mode { border-color: rgba(243,156,18,0.4); }
+    .cat-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: linear-gradient(90deg, rgba(192,57,43,0.13), transparent); border-bottom: 1px solid rgba(192,57,43,0.13); }
+    .cat-name { font-size: 14px; font-weight: 800; }
+    .cat-sub { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+    .cat-actions { display: flex; align-items: center; gap: 6px; }
+    .icon-btn { background: transparent; border: none; color: #ff6b6b; cursor: pointer; font-size: 16px; padding: 2px 6px; opacity: 0.7; }
+    .sort-arrow { border-radius: 6px; width: 30px; height: 30px; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #f39c12; background: #3d1500; color: #f39c12; }
+    .sort-arrow:disabled { border-color: #333; background: transparent; color: #333; cursor: default; }
+    .sort-mode-btn { background: transparent; border: 1px solid rgba(243,156,18,0.53); color: #f39c12; border-radius: 8px; padding: 6px 12px; font-weight: 800; cursor: pointer; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; font-family: inherit; }
+    .sort-mode-btn.active { background: #f39c12; color: #1a0a00; border-color: #f39c12; }
+
+    /* ===== ITEM ROW ===== */
+    .item-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.3s; }
+    .item-row.checked { background: rgba(46,204,113,0.08); }
+    .checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #c0392b; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.2s; font-size: 12px; font-weight: 900; }
+    .checkbox.checked { border-color: #2ecc71; background: #2ecc71; }
+    .item-name { flex: 1; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .item-name.checked { text-decoration: line-through; opacity: 0.5; }
+    .qty-control { display: flex; align-items: center; gap: 6px; background: rgba(26,10,0,0.33); border-radius: 8px; padding: 2px; }
+    .qty-btn { background: #c0392b; border: none; color: #fff; width: 22px; height: 22px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+    .qty-num { font-size: 13px; font-weight: 800; min-width: 28px; text-align: center; color: #f39c12; }
+
+    /* ===== ADD BUTTONS ===== */
+    .add-item-btn { width: 100%; padding: 10px; background: transparent; border: 1px dashed rgba(192,57,43,0.33); border-radius: 0 0 12px 12px; color: #c0392b; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 1px; font-family: inherit; }
+    .add-cat-btn { width: 100%; padding: 14px; background: transparent; border: 2px dashed rgba(192,57,43,0.33); border-radius: 16px; color: #c0392b; font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: 1px; margin-bottom: 12px; font-family: inherit; }
+
+    /* ===== INPUT ROW ===== */
+    .input-row { display: flex; gap: 8px; padding: 10px 14px; background: #1a0a00; border-top: 1px solid rgba(192,57,43,0.13); }
+    .text-input { flex: 1; background: #2d0e00; border: 1px solid rgba(192,57,43,0.33); border-radius: 8px; color: #fff; padding: 8px 12px; font-size: 13px; outline: none; font-family: inherit; }
+    .qty-input { width: 60px; background: #2d0e00; border: 1px solid rgba(192,57,43,0.33); border-radius: 8px; color: #f39c12; padding: 8px; font-size: 13px; outline: none; text-align: center; font-weight: 800; font-family: inherit; }
+    .confirm-btn { background: #c0392b; border: none; color: #fff; border-radius: 8px; padding: 8px 14px; font-weight: 800; cursor: pointer; font-size: 13px; font-family: inherit; }
+    .cancel-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 8px; padding: 8px 10px; font-weight: 700; cursor: pointer; font-size: 13px; font-family: inherit; }
+
+    /* ===== MODAL ===== */
+    #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+    #modal-overlay.show { display: flex; }
+    #modal-box { background: #2d0e00; border: 2px solid #c0392b; border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; }
+    .modal-title { font-size: 16px; font-weight: 900; margin-bottom: 16px; color: #f39c12; }
+
+    /* ===== EVENT CARD ===== */
+    .event-card { background: #2d0e00; border: 1px solid rgba(192,57,43,0.2); border-radius: 14px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+    .event-card.active { border: 2px solid #e74c3c; }
+    .select-btn { background: #2d0e00; border: 1px solid #c0392b; color: #fff; border-radius: 8px; padding: 6px 12px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; }
+    .select-btn.active { background: #c0392b; }
+
+    /* ===== ADD EVENT FORM ===== */
+    .form-block { background: #2d0e00; border: 1px solid rgba(192,57,43,0.2); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .form-title { font-size: 14px; font-weight: 800; color: #f39c12; margin-bottom: 12px; }
+    .form-label { font-size: 11px; color: #f39c12; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .full-input { width: 100%; background: #1a0a00; border: 1px solid rgba(192,57,43,0.33); border-radius: 8px; color: #fff; padding: 8px 12px; font-size: 13px; outline: none; font-family: inherit; margin-bottom: 8px; }
+    .full-btn { width: 100%; background: #c0392b; border: none; color: #fff; border-radius: 10px; padding: 12px; font-weight: 800; cursor: pointer; font-size: 14px; font-family: inherit; }
+    .copy-hint { font-size: 11px; opacity: 0.6; margin-top: 4px; padding-left: 4px; }
+
+    /* ===== EMPTY ===== */
+    .empty-state { text-align: center; padding: 40px 20px; opacity: 0.5; }
+    .empty-icon { font-size: 40px; margin-bottom: 8px; }
+
+    /* ===== SORT BAR ===== */
+    #sort-bar { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+
+    /* ===== SECTION TITLE ===== */
+    .section-title { font-size: 16px; font-weight: 900; color: #f39c12; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div id="header-inner">
+      <div id="logo">
+        <span id="flame">🔥</span>
+        <div>
+          <div id="logo-text">からあげ！ごっち</div>
+          <div id="logo-sub">EVENT CHECKLIST</div>
+        </div>
+      </div>
+      <div id="header-right">
+        <div id="progress-pct">0%</div>
+        <div id="progress-count">0/0</div>
+      </div>
+    </div>
+    <div id="progress-wrap"><div id="progress-fill"></div></div>
+  </div>
+
+  <!-- NAV -->
+  <div id="nav">
+    <button class="nav-btn active" onclick="switchView('checklist')">📋 チェックリスト</button>
+    <button class="nav-btn" onclick="switchView('events')">📅 イベント</button>
+  </div>
+
+  <!-- CHECKLIST VIEW -->
+  <div id="view-checklist" class="content">
+    <div id="event-selector">
+      <span style="font-size:20px">📍</span>
+      <select id="event-select" onchange="onSelectEvent(this.value)"></select>
+      <button class="reset-btn" onclick="resetChecks()">↺ リセット</button>
+    </div>
+    <div id="stats-row">
+      <div class="stat-card" style="background:rgba(231,76,60,0.13);border:1px solid rgba(231,76,60,0.33)">
+        <div class="stat-num" style="color:#e74c3c" id="stat-total">0</div>
+        <div class="stat-label">TOTAL</div>
+      </div>
+      <div class="stat-card" style="background:rgba(46,204,113,0.13);border:1px solid rgba(46,204,113,0.33)">
+        <div class="stat-num" style="color:#2ecc71" id="stat-checked">0</div>
+        <div class="stat-label">CHECKED</div>
+      </div>
+      <div class="stat-card" style="background:rgba(243,156,18,0.13);border:1px solid rgba(243,156,18,0.33)">
+        <div class="stat-num" style="color:#f39c12" id="stat-remaining">0</div>
+        <div class="stat-label">REMAINING</div>
+      </div>
+    </div>
+    <div id="sort-bar" style="display:none">
+      <button class="sort-mode-btn" id="sort-mode-btn" onclick="toggleSortMode()">⇅ カテゴリ並び替え</button>
+    </div>
+    <div id="categories-container"></div>
+    <button class="add-cat-btn" id="add-cat-btn" onclick="showAddCat()">＋ カテゴリを追加</button>
+    <div id="add-cat-form" style="display:none" class="form-block">
+      <div class="form-title">新しいカテゴリ</div>
+      <div style="display:flex;gap:8px">
+        <input class="text-input" id="new-cat-name" placeholder="例: 🧃 ドリンク類" onkeydown="if(event.key==='Enter')addCategory()" />
+        <button class="confirm-btn" onclick="addCategory()">追加</button>
+        <button class="cancel-btn" onclick="hideAddCat()">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENTS VIEW -->
+  <div id="view-events" class="content" style="display:none">
+    <div class="section-title">📅 イベント管理</div>
+    <div id="events-list"></div>
+    <div class="form-block">
+      <div class="form-title">＋ 新しいイベントを追加</div>
+      <input class="full-input" id="new-event-name" placeholder="イベント名（例: 夏祭り2026）" />
+      <input class="full-input" id="new-event-date" type="date" />
+      <div style="margin-bottom:12px">
+        <div class="form-label">📋 荷物リストを流用する（任意）</div>
+        <select class="full-input" id="copy-from-select" style="margin-bottom:4px" onchange="onCopyFromChange()">
+          <option value="">― 空のリストで始める ―</option>
+        </select>
+        <div class="copy-hint" id="copy-hint" style="display:none">✓ チェックはすべてリセットされます</div>
+      </div>
+      <button class="full-btn" id="add-event-btn" onclick="addEvent()">イベントを追加</button>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="modal-overlay" onclick="closeModal()">
+    <div id="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">✏️ アイテムを編集</div>
+      <input class="full-input" id="edit-item-name" style="margin-bottom:12px" />
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <span style="font-size:13px;opacity:0.7">数量</span>
+        <input class="qty-input" id="edit-item-qty" type="number" min="0" style="flex:1" />
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="confirm-btn" style="flex:1;padding:12px" onclick="saveEditItem()">保存</button>
+        <button class="cancel-btn" style="flex:1;padding:12px" onclick="closeModal()">キャンセル</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const DEFAULT_EVENTS = [{
+  id: "event-1",
+  name: "サンプルイベント",
+  date: "2026-05-17",
+  categories: [
+    { id:"cat-5", name:"🎌 ファサード", items:[
+      {id:"item-20",name:"横断幕",qty:1,checked:false},
+      {id:"item-21",name:"腰巻き",qty:1,checked:false},
+      {id:"item-22",name:"のぼり",qty:2,checked:false},
+      {id:"item-23",name:"物干し竿",qty:1,checked:false},
+      {id:"item-24",name:"LED照明",qty:2,checked:false},
+    ]},
+    { id:"cat-3", name:"📦 備品・消耗品", items:[
+      {id:"item-11",name:"ラミパック30",qty:1,checked:false},
+      {id:"item-12",name:"ラミパック40",qty:1,checked:false},
+      {id:"item-13",name:"レジ袋S",qty:1,checked:false},
+      {id:"item-14",name:"レジ袋M",qty:1,checked:false},
+      {id:"item-15",name:"ゴミ袋45ℓ",qty:1,checked:false},
+      {id:"item-25",name:"ポリグローブ",qty:1,checked:false},
+      {id:"item-26",name:"ゴム手袋",qty:1,checked:false},
+      {id:"item-27",name:"ラップ",qty:1,checked:false},
+      {id:"item-28",name:"ペーパータオル",qty:1,checked:false},
+    ]},
+    { id:"cat-4", name:"💰 販売・会計", items:[
+      {id:"item-16",name:"釣銭50,000円",qty:1,checked:false},
+      {id:"item-17",name:"レジ端末",qty:1,checked:false},
+      {id:"item-18",name:"メニュー表",qty:1,checked:false},
+      {id:"item-19",name:"各種POP",qty:1,checked:false},
+    ]},
+    { id:"cat-1", name:"🍳 調理器具", items:[
+      {id:"item-1", name:"フライヤー23ℓ",qty:1,checked:false},
+      {id:"item-2", name:"フライヤーはね",qty:1,checked:false},
+      {id:"item-3", name:"揚げザル",qty:1,checked:false},
+      {id:"item-4", name:"カス用ザル小",qty:1,checked:false},
+      {id:"item-5", name:"揚げ用トング",qty:1,checked:false},
+      {id:"item-6", name:"粉用番重",qty:1,checked:false},
+      {id:"item-7", name:"粉用ザル",qty:1,checked:false},
+      {id:"item-8", name:"揚げ用ボウル",qty:1,checked:false},
+      {id:"item-9", name:"粉ふるいザル",qty:1,checked:false},
+      {id:"item-10",name:"バット",qty:1,checked:false},
+      {id:"item-29",name:"ボウル",qty:1,checked:false},
+      {id:"item-30",name:"唐揚げ用トング",qty:1,checked:false},
+      {id:"item-31",name:"その他",qty:1,checked:false},
+    ]},
+    { id:"cat-2", name:"🧄 食材", items:[
+      {id:"item-32",name:"鶏むね肉",qty:1,checked:false},
+      {id:"item-33",name:"ぼんじり",qty:1,checked:false},
+      {id:"item-34",name:"むねトロ",qty:1,checked:false},
+      {id:"item-35",name:"岩塩",qty:1,checked:false},
+      {id:"item-36",name:"マヨ",qty:1,checked:false},
+      {id:"item-37",name:"片栗粉",qty:1,checked:false},
+      {id:"item-38",name:"油",qty:1,checked:false},
+      {id:"item-39",name:"その他",qty:1,checked:false},
+    ]},
+  ]
+}];
+
+// ==================== STATE ====================
+let events = [];
+let activeEventId = null;
+let sortMode = false;
+let editingItem = null; // {catId, itemId}
+let addingItemCatId = null;
+
+function genId() { return "id-" + Math.random().toString(36).substr(2,9); }
+
+function load() {
+  try {
+    const s = localStorage.getItem("gotchi-events");
+    events = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+  } catch { events = JSON.parse(JSON.stringify(DEFAULT_EVENTS)); }
+  activeEventId = events[0]?.id || null;
+}
+
+function persist() {
+  try { localStorage.setItem("gotchi-events", JSON.stringify(events)); } catch {}
+}
+
+function activeEvent() { return events.find(e => e.id === activeEventId); }
+
+// ==================== RENDER ====================
+function render() {
+  renderHeader();
+  renderEventSelect();
+  renderCategories();
+  renderEventsList();
+  renderCopyFromSelect();
+}
+
+function renderHeader() {
+  const ev = activeEvent();
+  const total = ev ? ev.categories.flatMap(c=>c.items).length : 0;
+  const checked = ev ? ev.categories.flatMap(c=>c.items).filter(i=>i.checked).length : 0;
+  const pct = total === 0 ? 0 : Math.round(checked/total*100);
+  document.getElementById("progress-pct").textContent = pct + "%";
+  document.getElementById("progress-count").textContent = checked + "/" + total;
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("stat-total").textContent = total;
+  document.getElementById("stat-checked").textContent = checked;
+  document.getElementById("stat-remaining").textContent = total - checked;
+}
+
+function renderEventSelect() {
+  const sel = document.getElementById("event-select");
+  const cur = sel.value;
+  sel.innerHTML = events.map(ev =>
+    `<option value="${ev.id}"${ev.id===activeEventId?" selected":""}>${ev.name}${ev.date?"　"+ev.date:""}</option>`
+  ).join("");
+  const sortBar = document.getElementById("sort-bar");
+  const ev = activeEvent();
+  sortBar.style.display = ev && ev.categories.length > 1 ? "flex" : "none";
+}
+
+function renderCategories() {
+  const container = document.getElementById("categories-container");
+  const ev = activeEvent();
+  if (!ev) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🍗</div><div>イベントがありません</div><div style="font-size:12px;margin-top:8px">「イベント」タブから追加してください</div></div>`;
+    document.getElementById("add-cat-btn").style.display = "none";
+    return;
+  }
+  document.getElementById("add-cat-btn").style.display = sortMode ? "none" : "block";
+
+  container.innerHTML = ev.categories.map((cat, idx) => {
+    const catChecked = cat.items.filter(i=>i.checked).length;
+    const isFirst = idx === 0;
+    const isLast = idx === ev.categories.length - 1;
+
+    const sortBtns = sortMode ? `
+      <button class="sort-arrow" ${isFirst?"disabled":""} onclick="moveCategory('${cat.id}',-1)">▲</button>
+      <button class="sort-arrow" ${isLast?"disabled":""} onclick="moveCategory('${cat.id}',1)">▼</button>
+    ` : "";
+
+    const itemsHtml = sortMode ? `<div style="padding:8px 14px;font-size:12px;opacity:0.5">${cat.items.length} アイテム</div>` :
+      cat.items.map(item => `
+        <div class="item-row${item.checked?" checked":""}" id="row-${item.id}">
+          <div class="checkbox${item.checked?" checked":""}" onclick="toggleItem('${cat.id}','${item.id}')">${item.checked?"✓":""}</div>
+          <div class="item-name${item.checked?" checked":""}" onclick="openEditModal('${cat.id}','${item.id}')">${escHtml(item.name)}</div>
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty('${cat.id}','${item.id}',-1)">−</button>
+            <span class="qty-num" id="qty-${item.id}">${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty('${cat.id}','${item.id}',1)">＋</button>
+          </div>
+          <button class="icon-btn" onclick="deleteItem('${cat.id}','${item.id}')">×</button>
+        </div>
+      `).join("") +
+      (addingItemCatId === cat.id ? `
+        <div class="input-row">
+          <input class="text-input" id="new-item-name-${cat.id}" placeholder="アイテム名" onkeydown="if(event.key==='Enter')addItem('${cat.id}')" />
+          <input class="qty-input" id="new-item-qty-${cat.id}" type="number" min="0" value="1" />
+          <button class="confirm-btn" onclick="addItem('${cat.id}')">追加</button>
+          <button class="cancel-btn" onclick="cancelAddItem()">✕</button>
+        </div>
+      ` : `<button class="add-item-btn" onclick="startAddItem('${cat.id}')">＋ アイテムを追加</button>`);
+
+    return `
+      <div class="cat-block${sortMode?" sort-mode":""}" id="cat-${cat.id}">
+        <div class="cat-header">
+          <div>
+            <div class="cat-name">${escHtml(cat.name)}</div>
+            <div class="cat-sub">${sortMode ? cat.items.length+" アイテム" : catChecked+"/"+cat.items.length+" 完了"}</div>
+          </div>
+          <div class="cat-actions">
+            ${sortBtns}
+            <button class="icon-btn" onclick="deleteCategory('${cat.id}')">🗑</button>
+          </div>
+        </div>
+        ${itemsHtml}
+      </div>`;
+  }).join("");
+
+  // addingItemの入力にフォーカス
+  if (addingItemCatId) {
+    const el = document.getElementById("new-item-name-"+addingItemCatId);
+    if (el) el.focus();
+  }
+}
+
+function renderEventsList() {
+  const container = document.getElementById("events-list");
+  container.innerHTML = events.map(ev => {
+    const total = ev.categories.flatMap(c=>c.items).length;
+    const checked = ev.categories.flatMap(c=>c.items).filter(i=>i.checked).length;
+    return `
+      <div class="event-card${ev.id===activeEventId?" active":""}">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:15px">${escHtml(ev.name)}</div>
+          ${ev.date?`<div style="font-size:11px;opacity:0.6;margin-top:2px">${ev.date}</div>`:""}
+          <div style="font-size:11px;color:#f39c12;margin-top:4px">${checked}/${total} チェック済み</div>
+        </div>
+        <button class="select-btn${ev.id===activeEventId?" active":""}" onclick="selectEvent('${ev.id}')">
+          ${ev.id===activeEventId?"✓ 選択中":"選択"}
+        </button>
+        ${events.length>1?`<button class="icon-btn" onclick="deleteEvent('${ev.id}')">🗑</button>`:""}
+      </div>`;
+  }).join("");
+}
+
+function renderCopyFromSelect() {
+  const sel = document.getElementById("copy-from-select");
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">― 空のリストで始める ―</option>` +
+    events.map(ev => `<option value="${ev.id}"${ev.id===cur?" selected":""}>${escHtml(ev.name)}${ev.date?"　"+ev.date:""}</option>`).join("");
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ==================== ACTIONS ====================
+function switchView(v) {
+  document.getElementById("view-checklist").style.display = v==="checklist" ? "block" : "none";
+  document.getElementById("view-events").style.display = v==="events" ? "block" : "none";
+  document.querySelectorAll(".nav-btn").forEach((b,i) => b.classList.toggle("active", (i===0&&v==="checklist")||(i===1&&v==="events")));
+  if (v==="checklist") { sortMode=false; updateSortBtn(); }
+  if (v==="events") renderCopyFromSelect();
+}
+
+function onSelectEvent(id) {
+  activeEventId = id;
+  render();
+}
+
+function selectEvent(id) {
+  activeEventId = id;
+  switchView("checklist");
+  render();
+}
+
+function toggleItem(catId, itemId) {
+  const ev = activeEvent();
+  const cat = ev.categories.find(c=>c.id===catId);
+  const item = cat.items.find(i=>i.id===itemId);
+  item.checked = !item.checked;
+  persist();
+  // flame animation
+  const flame = document.getElementById("flame");
+  flame.style.animation = "flamePop 0.6s ease";
+  setTimeout(()=>flame.style.animation="", 600);
+  renderHeader();
+  // update row cheaply
+  const row = document.getElementById("row-"+itemId);
+  if (row) {
+    row.className = "item-row" + (item.checked?" checked":"");
+    const cb = row.querySelector(".checkbox");
+    cb.className = "checkbox"+(item.checked?" checked":"");
+    cb.textContent = item.checked?"✓":"";
+    const nm = row.querySelector(".item-name");
+    nm.className = "item-name"+(item.checked?" checked":"");
+    // update cat sub
+    const catChecked = cat.items.filter(i=>i.checked).length;
+    const sub = document.querySelector(`#cat-${catId} .cat-sub`);
+    if (sub) sub.textContent = catChecked+"/"+cat.items.length+" 完了";
+  }
+}
+
+function changeQty(catId, itemId, delta) {
+  const cat = activeEvent().categories.find(c=>c.id===catId);
+  const item = cat.items.find(i=>i.id===itemId);
+  item.qty = Math.max(0, item.qty + delta);
+  persist();
+  const el = document.getElementById("qty-"+itemId);
+  if (el) el.textContent = item.qty;
+}
+
+function deleteItem(catId, itemId) {
+  const cat = activeEvent().categories.find(c=>c.id===catId);
+  cat.items = cat.items.filter(i=>i.id!==itemId);
+  persist();
+  renderCategories();
+  renderHeader();
+}
+
+function startAddItem(catId) {
+  addingItemCatId = catId;
+  renderCategories();
+}
+
+function cancelAddItem() {
+  addingItemCatId = null;
+  renderCategories();
+}
+
+function addItem(catId) {
+  const nameEl = document.getElementById("new-item-name-"+catId);
+  const qtyEl = document.getElementById("new-item-qty-"+catId);
+  const name = nameEl?.value.trim();
+  if (!name) return;
+  const qty = parseInt(qtyEl?.value)||1;
+  const cat = activeEvent().categories.find(c=>c.id===catId);
+  cat.items.push({id:genId(), name, qty, checked:false});
+  persist();
+  addingItemCatId = null;
+  renderCategories();
+  renderHeader();
+}
+
+function showAddCat() {
+  document.getElementById("add-cat-form").style.display = "block";
+  document.getElementById("add-cat-btn").style.display = "none";
+  document.getElementById("new-cat-name").focus();
+}
+
+function hideAddCat() {
+  document.getElementById("add-cat-form").style.display = "none";
+  document.getElementById("add-cat-btn").style.display = "block";
+}
+
+function addCategory() {
+  const name = document.getElementById("new-cat-name").value.trim();
+  if (!name) return;
+  activeEvent().categories.push({id:genId(), name, items:[]});
+  persist();
+  document.getElementById("new-cat-name").value = "";
+  hideAddCat();
+  renderCategories();
+  renderEventSelect();
+}
+
+function deleteCategory(catId) {
+  const cat = activeEvent().categories.find(c=>c.id===catId);
+  if (!confirm(`「${cat?.name}」を削除しますか？`)) return;
+  activeEvent().categories = activeEvent().categories.filter(c=>c.id!==catId);
+  persist();
+  renderCategories();
+  renderEventSelect();
+  renderHeader();
+}
+
+function moveCategory(catId, dir) {
+  const cats = activeEvent().categories;
+  const idx = cats.findIndex(c=>c.id===catId);
+  const newIdx = idx + dir;
+  if (newIdx<0||newIdx>=cats.length) return;
+  [cats[idx],cats[newIdx]] = [cats[newIdx],cats[idx]];
+  persist();
+  renderCategories();
+}
+
+function toggleSortMode() {
+  sortMode = !sortMode;
+  updateSortBtn();
+  renderCategories();
+}
+
+function updateSortBtn() {
+  const btn = document.getElementById("sort-mode-btn");
+  if (sortMode) { btn.textContent="✓ 並び替え完了"; btn.classList.add("active"); }
+  else { btn.textContent="⇅ カテゴリ並び替え"; btn.classList.remove("active"); }
+}
+
+function resetChecks() {
+  const ev = activeEvent();
+  ev.categories.forEach(cat=>cat.items.forEach(item=>item.checked=false));
+  persist();
+  renderCategories();
+  renderHeader();
+}
+
+function addEvent() {
+  const name = document.getElementById("new-event-name").value.trim();
+  if (!name) return;
+  const date = document.getElementById("new-event-date").value;
+  const copyId = document.getElementById("copy-from-select").value;
+  let categories = [];
+  if (copyId) {
+    const src = events.find(e=>e.id===copyId);
+    if (src) categories = src.categories.map(cat=>({
+      ...cat, id:genId(),
+      items: cat.items.map(item=>({...item, id:genId(), checked:false}))
+    }));
+  }
+  const newEv = {id:genId(), name, date, categories};
+  events.push(newEv);
+  activeEventId = newEv.id;
+  persist();
+  document.getElementById("new-event-name").value = "";
+  document.getElementById("new-event-date").value = "";
+  document.getElementById("copy-from-select").value = "";
+  document.getElementById("copy-hint").style.display = "none";
+  document.getElementById("add-event-btn").textContent = "イベントを追加";
+  switchView("checklist");
+  render();
+}
+
+function deleteEvent(id) {
+  const ev = events.find(e=>e.id===id);
+  if (!confirm(`「${ev?.name}」を削除しますか？\nチェックデータもすべて消えます。`)) return;
+  events = events.filter(e=>e.id!==id);
+  if (activeEventId===id) activeEventId = events[0]?.id||null;
+  persist();
+  render();
+}
+
+function onCopyFromChange() {
+  const v = document.getElementById("copy-from-select").value;
+  document.getElementById("copy-hint").style.display = v ? "block" : "none";
+  document.getElementById("add-event-btn").textContent = v ? "📋 流用してイベントを追加" : "イベントを追加";
+}
+
+// ===== EDIT MODAL =====
+function openEditModal(catId, itemId) {
+  const cat = activeEvent().categories.find(c=>c.id===catId);
+  const item = cat.items.find(i=>i.id===itemId);
+  editingItem = {catId, itemId};
+  document.getElementById("edit-item-name").value = item.name;
+  document.getElementById("edit-item-qty").value = item.qty;
+  document.getElementById("modal-overlay").classList.add("show");
+  document.getElementById("edit-item-name").focus();
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("show");
+  editingItem = null;
+}
+
+function saveEditItem() {
+  if (!editingItem) return;
+  const {catId, itemId} = editingItem;
+  const cat = activeEvent().categories.find(c=>c.id===catId);
+  const item = cat.items.find(i=>i.id===itemId);
+  item.name = document.getElementById("edit-item-name").value.trim() || item.name;
+  item.qty = parseInt(document.getElementById("edit-item-qty").value)||0;
+  persist();
+  closeModal();
+  renderCategories();
+}
+
+// ===== PWA Service Worker =====
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+
+// ==================== INIT ====================
+load();
+render();
+</script>
+</body>
+</html>
