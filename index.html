@@ -63,6 +63,7 @@ button{font-family:inherit}
 .nm{flex:1;font-size:14px;font-weight:600;cursor:pointer;word-break:break-all}
 .nm.ck{text-decoration:line-through;opacity:.7}
 .qe{width:58px;background:rgba(26,10,0,.5);border:1px solid rgba(243,156,18,.4);border-radius:6px;color:#f39c12;font-size:12px;font-weight:800;text-align:center;font-family:inherit;outline:none;padding:4px 2px;flex-shrink:0}
+.eb{background:transparent;border:1px solid rgba(243,156,18,.35);color:#f39c12;border-radius:6px;cursor:pointer;font-size:13px;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .db{background:transparent;border:none;color:#ff6b6b;cursor:pointer;font-size:18px;padding:0 2px;flex-shrink:0}
 .isa{border-radius:4px;width:22px;height:22px;font-size:10px;cursor:pointer;border:1px solid rgba(243,156,18,.4);background:transparent;color:#f39c12;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .isa:disabled{border-color:#333;color:#333;cursor:default}
@@ -212,9 +213,10 @@ function rCats(){
           isBtns+="<button class=\"isa\""+( nU?"":" disabled")+" onclick=\"moveItem('"+cat.id+"','"+it.id+"',1)\">▼</button>";
         }
         rows+="<div class=\"ir"+( it.checked?" ck":"")+"\" id=\"r"+it.id+"\">";
-        rows+="<div class=\"bx"+( it.checked?" ck":"")+"\";onclick=\"togItem('"+cat.id+"','"+it.id+"')\">"+( it.checked?"✓":"")+"</div>";
-        rows+="<div class=\"nm"+( it.checked?" ck":"")+"\";onclick=\"openMo('"+cat.id+"','"+it.id+"')\">"+esc(it.name)+"</div>";
+        rows+="<div class=\"bx"+( it.checked?" ck":"")+"\" onclick=\"togItem('"+cat.id+"','"+it.id+"')\">"+( it.checked?"✓":"")+"</div>";
+        rows+="<div class=\"nm"+( it.checked?" ck":"")+"\" onclick=\"openMo('"+cat.id+"','"+it.id+"')\">"+esc(it.name)+"</div>";
         rows+=isBtns;
+        rows+="<button class=\"eb\" onclick=\"openMo('"+cat.id+"','"+it.id+"')\">✎</button>";
         rows+="<input class=\"qe\" id=\"q"+it.id+"\" value=\""+esc(it.qty)+"\" onchange=\"setQty('"+cat.id+"','"+it.id+"',this.value)\" onclick=\"this.select()\">";
         rows+="<button class=\"db\" onclick=\"askDelItem('"+cat.id+"','"+it.id+"')\">×</button></div>";
       }
@@ -246,7 +248,7 @@ function rEvList(){
     h+="<div style=\"flex:1\"><div style=\"font-size:10px;color:#f39c12;margin-bottom:2px\">"+tl+"</div><div style=\"font-weight:800;font-size:15px\">"+esc(e.name)+"</div>";
     if(e.date)h+="<div style=\"font-size:11px;opacity:.6;margin-top:2px\">"+esc(e.date)+"</div>";
     h+="<div style=\"font-size:11px;color:#f39c12;margin-top:4px\">"+chk+"/"+tot+" チェック済み</div></div>";
-    h+="<button class=\"esb"+( act?" on":"")+"\";onclick=\"selEv('"+e.id+"')\">"+( act?"✓ 選択中":"選択")+"</button>";
+    h+="<button class=\"esb"+( act?" on":"")+"\" onclick=\"selEv('"+e.id+"')\">"+( act?"✓ 選択中":"選択")+"</button>";
     if(EVS.length>1)h+="<button class=\"ib\" onclick=\"askDelEv('"+e.id+"')\">🗑</button>";
     h+="</div>";
   }
