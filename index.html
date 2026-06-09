@@ -76,6 +76,12 @@ button{font-family:inherit}
 #mo.show{display:flex}
 #mb{background:#2d0e00;border:2px solid #c0392b;border-radius:20px;padding:24px;width:100%;max-width:360px}
 .mt{font-size:16px;font-weight:900;margin-bottom:16px;color:#f39c12}
+#dm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);align-items:center;justify-content:center;z-index:210;padding:20px}
+#dm.show{display:flex}
+#dbx{background:#2d0e00;border:2px solid #c0392b;border-radius:20px;padding:24px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.55)}
+#dt{font-size:17px;font-weight:900;margin-bottom:8px;color:#f39c12}
+#dd{font-size:13px;line-height:1.6;opacity:.82;margin-bottom:18px;word-break:break-word}
+.danger{flex:1;background:#c0392b;border:none;color:#fff;border-radius:8px;padding:12px;font-weight:900;cursor:pointer;font-size:14px}
 .ec{background:#2d0e00;border:1px solid rgba(192,57,43,.2);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
 .ec.on{border:2px solid #e74c3c}
 .esb{background:#2d0e00;border:1px solid #c0392b;color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:12px;flex-shrink:0}
@@ -109,11 +115,12 @@ button{font-family:inherit}
 <div class="fb"><div class="ft">＋ 新しいイベントを追加</div><input class="fi" id="nen" placeholder="イベント名"><input class="fi" id="ned" type="date"><div style="margin-bottom:8px"><label class="fl2">タグ（種別）</label><select class="fi" id="ntag" style="margin-bottom:0"><option value="0">🏕 屋外イベント</option><option value="1">🏪 百貨店催事</option></select></div><div style="margin-bottom:12px"><label class="fl2">📋 荷物リストを流用する（任意）</label><select class="fi" id="cfs" onchange="onCFC()" style="margin-bottom:4px"><option value="">&#12540; 空のリストで始める &#12540;</option></select><div id="ch" style="display:none;font-size:11px;opacity:.6;margin-top:4px">✓ チェックはすべてリセットされます</div></div><button class="fb2" id="aeb" onclick="doAddEv()">イベントを追加</button></div>
 </div>
 <div id="mo" onclick="closeMo()"><div id="mb" onclick="event.stopPropagation()"><div class="mt">✏️ アイテムを編集</div><input class="fi" id="ein" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><span style="font-size:13px;opacity:.7">数量</span><input class="fi" id="eiq" style="flex:1;margin-bottom:0" placeholder="例: 1、100kg、適量"></div><div style="display:flex;gap:8px"><button class="ok" style="flex:1;padding:12px" onclick="saveMo()">保存</button><button class="ng" style="flex:1;padding:12px" onclick="closeMo()">キャンセル</button></div></div></div>
+<div id="dm" onclick="closeDelConfirm()"><div id="dbx" onclick="event.stopPropagation()"><div id="dt">削除しますか？</div><div id="dd">この項目を削除します。</div><div style="display:flex;gap:8px"><button class="ng" style="flex:1;padding:12px" onclick="closeDelConfirm()">キャンセル</button><button class="danger" onclick="runDelConfirm()">削除する</button></div></div></div>
 </div>
 <script>
 var DEF=[{id:"ev_out",tag:0,name:"屋外イベント（デフォルト）",date:"",categories:[{id:"co1",name:"⛺ ファサード",items:[{id:"o1",name:"横断幕",qty:"1",checked:false},{id:"o2",name:"受賞歴タペストリー",qty:"1",checked:false},{id:"o3",name:"監修タペストリー",qty:"1",checked:false},{id:"o4",name:"日本一タペストリー",qty:"1",checked:false},{id:"o5",name:"のぼり",qty:"1",checked:false},{id:"o6",name:"物干し竿",qty:"1",checked:false},{id:"o7",name:"クランプ",qty:"1",checked:false},{id:"o8",name:"ロープ",qty:"1",checked:false},{id:"o9",name:"腰巻",qty:"1",checked:false},{id:"o10",name:"ブルーシート",qty:"1",checked:false},{id:"o11",name:"養生段ボール",qty:"1",checked:false}]},{id:"co2",name:"📦 消耗品",items:[{id:"o12",name:"ラミパックNo.30",qty:"1",checked:false},{id:"o13",name:"ラミパックNo.40",qty:"1",checked:false},{id:"o14",name:"レジ袋S",qty:"1",checked:false},{id:"o15",name:"レジ袋M",qty:"1",checked:false},{id:"o16",name:"竹串",qty:"1",checked:false},{id:"o17",name:"ゴミ袋45L",qty:"1",checked:false},{id:"o18",name:"ポリグローブM",qty:"1",checked:false},{id:"o19",name:"ポリグローブS",qty:"1",checked:false},{id:"o20",name:"ラップ",qty:"1",checked:false},{id:"o21",name:"ペーパータオル",qty:"1",checked:false}]},{id:"co3",name:"🍳 調理道具",items:[{id:"o22",name:"フライヤー23L",qty:"1",checked:false},{id:"o23",name:"フライヤーはね",qty:"1",checked:false},{id:"o24",name:"揚げ籠",qty:"1",checked:false},{id:"o25",name:"ポテトフライヤー",qty:"1",checked:false},{id:"o26",name:"キッチンタイマー",qty:"1",checked:false},{id:"o27",name:"揚げ用トング",qty:"1",checked:false},{id:"o28",name:"カス用ザル",qty:"1",checked:false},{id:"o29",name:"粉用番重",qty:"1",checked:false},{id:"o30",name:"濾し用番重・ザル",qty:"1",checked:false},{id:"o31",name:"ドリップ用ザル",qty:"1",checked:false},{id:"o32",name:"ふるい用ザル",qty:"1",checked:false},{id:"o33",name:"ボウル27cm",qty:"1",checked:false},{id:"o34",name:"揚げ用ボール30cm",qty:"1",checked:false},{id:"o35",name:"バット大",qty:"1",checked:false},{id:"o36",name:"トング",qty:"1",checked:false},{id:"o37",name:"フライ返し",qty:"1",checked:false}]},{id:"co4",name:"🗒 受付BOX",items:[{id:"o38",name:"かご",qty:"1",checked:false},{id:"o39",name:"注文用POP",qty:"1",checked:false},{id:"o40",name:"クリップ",qty:"1",checked:false},{id:"o41",name:"S管",qty:"1",checked:false},{id:"o42",name:"電卓",qty:"1",checked:false},{id:"o43",name:"時計",qty:"1",checked:false},{id:"o44",name:"小銭管理用タッパ",qty:"1",checked:false},{id:"o45",name:"金銭トレイ",qty:"1",checked:false},{id:"o46",name:"領収書",qty:"1",checked:false},{id:"o47",name:"レジ端末",qty:"1",checked:false}]},{id:"co5",name:"🐔 食材",items:[{id:"o48",name:"粉",qty:"1",checked:false},{id:"o49",name:"油",qty:"1",checked:false},{id:"o50",name:"岩塩",qty:"1",checked:false}]},{id:"co6",name:"🔧 その他",items:[{id:"o51",name:"工具箱",qty:"1",checked:false},{id:"o52",name:"油缶",qty:"1",checked:false},{id:"o53",name:"パレット",qty:"1",checked:false},{id:"o54",name:"オリコン",qty:"1",checked:false},{id:"o55",name:"長机",qty:"1",checked:false},{id:"o56",name:"受付台",qty:"1",checked:false},{id:"o57",name:"コストコテーブル",qty:"1",checked:false},{id:"o58",name:"粉用テーブル",qty:"1",checked:false},{id:"o59",name:"折り畳みテーブル",qty:"1",checked:false},{id:"o60",name:"ポリタンク20L",qty:"1",checked:false},{id:"o61",name:"バケツ",qty:"1",checked:false},{id:"o62",name:"ANKER電源＆予備バッテリー",qty:"1",checked:false},{id:"o63",name:"延長コード",qty:"1",checked:false},{id:"o64",name:"LED照明",qty:"1",checked:false},{id:"o65",name:"ドラム",qty:"1",checked:false},{id:"o66",name:"ステンレステーブル",qty:"1",checked:false}]}]},{id:"ev_dep",tag:1,name:"百貨店催事（デフォルト）",date:"",categories:[{id:"cd1",name:"🗒 受付BOX",items:[{id:"d1",name:"カルトン",qty:"1",checked:false},{id:"d2",name:"商品シール",qty:"1",checked:false},{id:"d3",name:"店舗シール",qty:"1",checked:false},{id:"d4",name:"A6チラシ",qty:"1",checked:false},{id:"d5",name:"セロハンテープ",qty:"1",checked:false},{id:"d6",name:"量り",qty:"1",checked:false}]},{id:"cd2",name:"⛺ ファサード用BOX",items:[{id:"d7",name:"受付台",qty:"1",checked:false},{id:"d8",name:"赤布",qty:"1",checked:false},{id:"d9",name:"腰巻",qty:"1",checked:false},{id:"d10",name:"のれん",qty:"1",checked:false},{id:"d11",name:"ござ",qty:"1",checked:false}]},{id:"cd3",name:"🍳 厨房用BOX大",items:[{id:"d12",name:"番重小",qty:"1",checked:false},{id:"d13",name:"バット深",qty:"1",checked:false},{id:"d14",name:"バット浅",qty:"1",checked:false},{id:"d15",name:"ポリ手袋M",qty:"1",checked:false},{id:"d16",name:"ゴム手袋M",qty:"1",checked:false},{id:"d17",name:"クッキングシート",qty:"1",checked:false},{id:"d18",name:"ラップ",qty:"1",checked:false},{id:"d19",name:"キッチンペーパー",qty:"1",checked:false},{id:"d20",name:"色付きトング",qty:"1",checked:false}]},{id:"cd4",name:"🌟 ファサード用BOX大",items:[{id:"d21",name:"クリアパネル",qty:"1",checked:false},{id:"d22",name:"監修POP",qty:"1",checked:false},{id:"d23",name:"テレビ出演POP",qty:"1",checked:false},{id:"d24",name:"POPスタンド",qty:"1",checked:false},{id:"d25",name:"LEDバー",qty:"1",checked:false},{id:"d26",name:"LEDライト",qty:"1",checked:false},{id:"d27",name:"斜めスタンド",qty:"1",checked:false}]},{id:"cd5",name:"📦 厨房オリコンA",items:[{id:"d28",name:"フライヤーはね",qty:"1",checked:false},{id:"d29",name:"ボウル27cm",qty:"1",checked:false},{id:"d30",name:"ボウル30cm",qty:"1",checked:false},{id:"d31",name:"古い揚げザル",qty:"1",checked:false},{id:"d32",name:"ドリップ用ザル",qty:"1",checked:false}]},{id:"cd6",name:"📦 厨房オリコンB",items:[{id:"d33",name:"粉用番重",qty:"1",checked:false},{id:"d34",name:"濾し用番重・ザル",qty:"1",checked:false},{id:"d35",name:"揚げ籠",qty:"1",checked:false},{id:"d36",name:"フライ返し",qty:"1",checked:false},{id:"d37",name:"岩塩",qty:"1",checked:false},{id:"d38",name:"塩レモン",qty:"1",checked:false},{id:"d39",name:"ごま",qty:"1",checked:false}]},{id:"cd7",name:"📦 包装資材オリコンA",items:[{id:"d40",name:"052",qty:"1",checked:false},{id:"d41",name:"045",qty:"1",checked:false},{id:"d42",name:"031",qty:"1",checked:false},{id:"d43",name:"045B",qty:"1",checked:false},{id:"d44",name:"輪ゴム",qty:"1",checked:false},{id:"d45",name:"バラン1号",qty:"1",checked:false},{id:"d46",name:"バラン3号",qty:"1",checked:false},{id:"d47",name:"213透明袋",qty:"1",checked:false}]},{id:"cd8",name:"🔧 その他",items:[{id:"d48",name:"折り畳み台",qty:"1",checked:false},{id:"d49",name:"折り畳み机",qty:"1",checked:false},{id:"d50",name:"ほうき＆ちりとり",qty:"1",checked:false},{id:"d51",name:"台車",qty:"1",checked:false}]},{id:"cd9",name:"🔧 工具箱",items:[{id:"d52",name:"磁石",qty:"1",checked:false},{id:"d53",name:"プライスカード",qty:"1",checked:false},{id:"d54",name:"プライス縦",qty:"1",checked:false},{id:"d55",name:"各種工具",qty:"1",checked:false}]},{id:"cd10",name:"🐔 食材",items:[{id:"d56",name:"油",qty:"1",checked:false},{id:"d57",name:"粉",qty:"1",checked:false},{id:"d58",name:"手羽先のタレ",qty:"1",checked:false}]}]}];
 
-var EVS=[],AID=null,SORT=false,ECID=null,EIID=null,ACID=null,CTAG=0;
+var EVS=[],AID=null,SORT=false,ECID=null,EIID=null,ACID=null,CTAG=0,PDEL=null;
 
 function gid(){return "x"+Math.random().toString(36).substr(2,9);}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -209,7 +216,7 @@ function rCats(){
         rows+="<div class=\"nm"+( it.checked?" ck":"")+"\";onclick=\"openMo('"+cat.id+"','"+it.id+"')\">"+esc(it.name)+"</div>";
         rows+=isBtns;
         rows+="<input class=\"qe\" id=\"q"+it.id+"\" value=\""+esc(it.qty)+"\" onchange=\"setQty('"+cat.id+"','"+it.id+"',this.value)\" onclick=\"this.select()\">";
-        rows+="<button class=\"db\" onclick=\"delItem('"+cat.id+"','"+it.id+"')\">×</button></div>";
+        rows+="<button class=\"db\" onclick=\"askDelItem('"+cat.id+"','"+it.id+"')\">×</button></div>";
       }
       if(ACID===cat.id){
         rows+="<div class=\"ar\"><input class=\"ti\" style=\"flex:1;min-width:80px\" id=\"ni"+cat.id+"\" placeholder=\"アイテム名\"><input class=\"ti\" style=\"width:80px;flex-shrink:0\" id=\"nq"+cat.id+"\" placeholder=\"数量\"><button class=\"ok\" onclick=\"doAddItem('"+cat.id+"')\">追加</button><button class=\"ng\" onclick=\"cancelAI()\">✕</button></div>";
@@ -221,7 +228,7 @@ function rCats(){
     }
     h+="<div class=\"cb"+( SORT?" sm":"")+"\" id=\"ct"+cat.id+"\">";
     h+="<div class=\"ch\"><div><div class=\"cn\">"+esc(cat.name)+"</div><div class=\"cs\">"+sub+"</div></div>";
-    h+="<div class=\"ca\">"+sa+"<button class=\"ib\" onclick=\"delCat('"+cat.id+"')\">🗑</button></div></div>";
+    h+="<div class=\"ca\">"+sa+"<button class=\"ib\" onclick=\"askDelCat('"+cat.id+"')\">🗑</button></div></div>";
     h+=rows+"</div>";
   }
   cc.innerHTML=h;
@@ -240,7 +247,7 @@ function rEvList(){
     if(e.date)h+="<div style=\"font-size:11px;opacity:.6;margin-top:2px\">"+esc(e.date)+"</div>";
     h+="<div style=\"font-size:11px;color:#f39c12;margin-top:4px\">"+chk+"/"+tot+" チェック済み</div></div>";
     h+="<button class=\"esb"+( act?" on":"")+"\";onclick=\"selEv('"+e.id+"')\">"+( act?"✓ 選択中":"選択")+"</button>";
-    if(EVS.length>1)h+="<button class=\"ib\" onclick=\"delEv('"+e.id+"')\">🗑</button>";
+    if(EVS.length>1)h+="<button class=\"ib\" onclick=\"askDelEv('"+e.id+"')\">🗑</button>";
     h+="</div>";
   }
   el.innerHTML=h;
@@ -297,6 +304,25 @@ function setQty(cid,iid,val){
     }
   }
 }
+function openDelConfirm(title,desc,action){
+  PDEL=action;
+  document.getElementById("dt").textContent=title;
+  document.getElementById("dd").textContent=desc;
+  document.getElementById("dm").className="show";
+}
+function closeDelConfirm(){document.getElementById("dm").className="";PDEL=null;}
+function runDelConfirm(){var a=PDEL;closeDelConfirm();if(a)a();}
+function askDelItem(cid,iid){
+  var ev=getEv();if(!ev)return;
+  for(var ci=0;ci<ev.categories.length;ci++){
+    if(ev.categories[ci].id!==cid)continue;
+    for(var ii=0;ii<ev.categories[ci].items.length;ii++){
+      if(ev.categories[ci].items[ii].id!==iid)continue;
+      openDelConfirm("項目を削除しますか？","「"+ev.categories[ci].items[ii].name+"」を削除します。",function(){delItem(cid,iid);});
+      return;
+    }
+  }
+}
 function delItem(cid,iid){
   var ev=getEv();
   for(var ci=0;ci<ev.categories.length;ci++){
@@ -340,6 +366,14 @@ function doAddCat(){
   var ev=getEv();if(!ev)return;
   ev.categories.push({id:gid(),name:name,items:[]});
   save();document.getElementById("ncn").value="";hideAC();rCats();rSel();
+}
+function askDelCat(cid){
+  var ev=getEv();if(!ev)return;
+  for(var i=0;i<ev.categories.length;i++){
+    if(ev.categories[i].id!==cid)continue;
+    openDelConfirm("カテゴリを削除しますか？","「"+ev.categories[i].name+"」と中の項目を削除します。",function(){delCat(cid);});
+    return;
+  }
 }
 function delCat(cid){
   var ev=getEv();if(!ev)return;
@@ -388,6 +422,13 @@ function doAddEv(){
   document.getElementById("cfs").value="";document.getElementById("ch").style.display="none";
   document.getElementById("aeb").textContent="イベントを追加";
   selTag(tag);sw("c");render();
+}
+function askDelEv(id){
+  for(var i=0;i<EVS.length;i++){
+    if(EVS[i].id!==id)continue;
+    openDelConfirm("イベントを削除しますか？","「"+EVS[i].name+"」のリストを削除します。",function(){delEv(id);});
+    return;
+  }
 }
 function delEv(id){
   var evs=[];for(var i=0;i<EVS.length;i++){if(EVS[i].id!==id)evs.push(EVS[i]);}
